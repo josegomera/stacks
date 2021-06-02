@@ -4,6 +4,7 @@ services:
   mssql:
     image: mcr.microsoft.com/mssql/server:2019-CU10-ubuntu-20.04
     restart: unless-stopped
+    container_name: mssql
     ports:
       - "1433:1433"
     environment:
@@ -13,17 +14,18 @@ services:
     volumes:
       - backup_folder:/tmp/sqlbak
     networks:
-      - overlay
+      - keycloak
   mssqlscripts:
     image: mcr.microsoft.com/mssql-tools
     depends_on:
       - mssql
     command: /bin/bash -c 'until /opt/mssql-tools/bin/sqlcmd -S mssql -U sa -P "${SA_PASSWORD}" -Q "create database Keycloak"; do sleep 5; done'
     networks:
-      - overlay
+      - keycloak
   keycloak:
     image: quay.io/keycloak/keycloak:13.0.1
     restart: unless-stopped
+    container_name: keycloak
     depends_on:
       - mssql
       - mssqlscripts
@@ -38,10 +40,11 @@ services:
       - DB_ADDR=${DB_ADDR}
       - DB_DATABASE=${DB_DATABASE}
     networks:
-      - overlay
+      - keycloak
   sqlbak:
     image: pranasnet/sqlbak
     restart: unless-stopped
+    container_name: sqlbak
     volumes:
       - sqlbak_local_data:/opt/sqlbak
       - backup_folder:/tmp/sqlbak
@@ -53,9 +56,9 @@ services:
       password: ${SA_PASSWORD}
       host: mssql
     networks:
-      - overlay
+      - keycloak
 volumes:
   sqlbak_local_data:
   backup_folder:
 networks:
-  overlay:
+  keycloak:
