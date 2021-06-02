@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2019-CU10-ubuntu-20.04
+    restart: unless-stopped
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${SA_PASSWORD}
+      - MSSQL_PID=${MSSQL_PID}
+    volumes:
+      - backup_folder:/tmp/sqlbak
+    networks:
+      - overlay
+  mssqlscripts:
+    image: mcr.microsoft.com/mssql-tools
+    depends_on:
+      - mssql
+    command: /bin/bash -c 'until /opt/mssql-tools/bin/sqlcmd -S mssql -U sa -P "${SA_PASSWORD}" -Q "create database Keycloak"; do sleep 5; done'
+    networks:
+      - overlay
+  keycloak:
+    image: quay.io/keycloak/keycloak:13.0.1
+    restart: unless-stopped
+    depends_on:
+      - mssql
+      - mssqlscripts
+    ports:
+      - "8080:8080"
+    environment:
+      - KEYCLOAK_USER=${KEYCLOAK_USER}
+      - KEYCLOAK_PASSWORD=${KEYCLOAK_PASSWORD}
+      - DB_VENDOR=${DB_VENDOR}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${SA_PASSWORD}
+      - DB_ADDR=${DB_ADDR}
+      - DB_DATABASE=${DB_DATABASE}
+    networks:
+      - overlay
+  sqlbak:
+    image: pranasnet/sqlbak
+    restart: unless-stopped
+    volumes:
+      - sqlbak_local_data:/opt/sqlbak
+      - backup_folder:/tmp/sqlbak
+    environment:
+      sqlbak_key: ${SQLBAK_KEY}
+      sqlbak_name: ${SQLBAK_NAME}
+      db_type: ${SQLBAK_DB_TYPE}
+      user: ${SQLBAK_DATABASE_USER}
+      password: ${SA_PASSWORD}
+      host: mssql
+    networks:
+      - overlay
+volumes:
+  sqlbak_local_data:
+  backup_folder:
+networks:
+  overlay:
