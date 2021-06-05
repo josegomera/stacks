@@ -1,12 +1,21 @@
 version: "3"
 
 services:
+  traefik:
+    image: traefik:v2.4
+    ports:
+      # Exposes port 80 for incomming web requests
+      - "80:80"
+      - "443:443"
+      # The Web UI port http://0.0.0.0:8080 (enabled by --api.insecure=true)
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik.yml:/etc/traefik/traefik.yml
   mssql:
     image: mcr.microsoft.com/mssql/server:2019-CU10-ubuntu-20.04
     ports:
       - "1433:1433"
-    networks:
-      - proxy
     environment:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=${SA_PASSWORD}
@@ -15,8 +24,6 @@ services:
       - backup_folder:/tmp/sqlbak
   mssqlscripts:
     image: mcr.microsoft.com/mssql-tools
-    networks:
-      - proxy
     depends_on:
       - mssql
     command: /bin/bash -c 'until /opt/mssql-tools/bin/sqlcmd -S mssql -U sa -P "${SA_PASSWORD}" -Q "create database Keycloak"; do sleep 5; done'
@@ -25,8 +32,8 @@ services:
     depends_on:
       - mssql
       - mssqlscripts
-    networks:
-      - proxy
+    expose:
+      - 8080
     environment:
       - KEYCLOAK_USER=${KEYCLOAK_USER}
       - KEYCLOAK_PASSWORD=${KEYCLOAK_PASSWORD}
@@ -43,8 +50,6 @@ services:
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
   sqlbak:
     image: pranasnet/sqlbak
-    networks:
-      - proxy
     volumes:
       - sqlbak_local_data:/opt/sqlbak
       - backup_folder:/tmp/sqlbak
@@ -59,7 +64,3 @@ services:
 volumes:
   sqlbak_local_data:
   backup_folder:
-
-networks:
-  proxy:
-    external: true
