@@ -12,9 +12,10 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./traefik.yml:/etc/traefik/traefik.yml
-    networks: 
+    networks:
       - proxy
-networks: 
+    labels:
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+networks:
   proxy:
     external: true
- 
