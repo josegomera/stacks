@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.3"
 
 services:
   mssql:
@@ -24,13 +24,9 @@ services:
       - keycloak
   keycloak:
     image: quay.io/keycloak/keycloak:13.0.1
-    restart: unless-stopped
-    container_name: keycloak
     depends_on:
       - mssql
       - mssqlscripts
-    ports:
-      - "8080:8080"
     environment:
       - KEYCLOAK_USER=${KEYCLOAK_USER}
       - KEYCLOAK_PASSWORD=${KEYCLOAK_PASSWORD}
@@ -39,6 +35,12 @@ services:
       - DB_PASSWORD=${SA_PASSWORD}
       - DB_ADDR=${DB_ADDR}
       - DB_DATABASE=${DB_DATABASE}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=Host(`localhost`)"
+      - "traefik.http.routers.keycloak.entrypoints=web"
+      - "traefik.http.routers.keycloak.service=keycloak"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
     networks:
       - keycloak
   sqlbak:

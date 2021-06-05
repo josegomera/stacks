@@ -1,0 +1,1 @@
+https://www.lisenet.com/2020/deploy-keycloak-using-docker-swarm/
