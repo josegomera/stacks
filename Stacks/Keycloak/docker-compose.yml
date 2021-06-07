@@ -37,10 +37,11 @@ services:
       - DB_DATABASE=${DB_DATABASE}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.keycloak.rule=Host(`keycloak-local.duckdns.org`)"
-      - "traefik.http.routers.keycloak.entrypoints=web"
+      - "traefik.http.routers.keycloak.rule=Host(`keycloak-dev.duckdns.org`)"
       - "traefik.http.routers.keycloak.service=keycloak"
+      - "traefik.http.routers.keycloak.entrypoints=web"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+
   sqlbak:
     image: pranasnet/sqlbak
     networks:

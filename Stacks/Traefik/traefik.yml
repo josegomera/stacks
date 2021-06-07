@@ -27,3 +27,16 @@ entryPoints:
     address: ":80"
   websecure:
     address: ":443"
+
+################################################################
+# Challenge HTTP
+################################################################
+certificatesResolvers:
+  myresolver:
+    acme:
+      # caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+      email: j.gomera@motorcredito.com.do
+      storage: acme.json
+      # tlsChallenge: true
+      httpChallenge:
+        entryPoint: web

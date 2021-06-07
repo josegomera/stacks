@@ -14,8 +14,6 @@ services:
       - ./traefik.yml:/etc/traefik/traefik.yml
     networks:
       - proxy
-    labels:
-      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
 networks:
   proxy:
     external: true
