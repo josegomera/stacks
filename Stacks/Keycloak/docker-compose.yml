@@ -1,30 +1,8 @@
 version: "3"
 
 services:
-  mssql:
-    image: mcr.microsoft.com/mssql/server:2019-CU10-ubuntu-20.04
-    ports:
-      - "1433:1433"
-    networks:
-      - proxy
-    environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=${SA_PASSWORD}
-      - MSSQL_PID=${MSSQL_PID}
-    volumes:
-      - backup_folder:/tmp/sqlbak
-  mssqlscripts:
-    image: mcr.microsoft.com/mssql-tools
-    networks:
-      - proxy
-    depends_on:
-      - mssql
-    command: /bin/bash -c 'until /opt/mssql-tools/bin/sqlcmd -S mssql -U sa -P "${SA_PASSWORD}" -Q "create database Keycloak"; do sleep 5; done'
   keycloak:
     image: quay.io/keycloak/keycloak:13.0.1
-    depends_on:
-      - mssql
-      - mssqlscripts
     networks:
       - proxy
     environment:
@@ -41,25 +19,6 @@ services:
       - "traefik.http.routers.keycloak.service=keycloak"
       - "traefik.http.routers.keycloak.entrypoints=web"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
-
-  sqlbak:
-    image: pranasnet/sqlbak
-    networks:
-      - proxy
-    volumes:
-      - sqlbak_local_data:/opt/sqlbak
-      - backup_folder:/tmp/sqlbak
-    environment:
-      sqlbak_key: ${SQLBAK_KEY}
-      sqlbak_name: ${SQLBAK_NAME}
-      db_type: ${SQLBAK_DB_TYPE}
-      user: ${SQLBAK_DATABASE_USER}
-      password: ${SA_PASSWORD}
-      host: mssql
-
-volumes:
-  sqlbak_local_data:
-  backup_folder:
 
 networks:
   proxy:
